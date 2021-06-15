@@ -6,6 +6,8 @@ using Printf
 using Random: randperm, MersenneTwister
 using SparseArrays: SparseMatrixCSC, nnz
 using Statistics: mean, std
+using TensorBoardLogger
+using Logging
 
 export DMatrix, Booster
 export xgboost, predict, save, nfold_cv, slice, get_info, set_info, dump_model, importance
