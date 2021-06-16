@@ -158,7 +158,6 @@ function xgboost(data, nrounds::Integer; label = Union{}, param = [], watchlist 
     if length(group) > 0
       set_info(dtrain, "group", group)
     end
-
     cache = [dtrain]
     for itm in watchlist
         push!(cache, itm[1])
@@ -181,12 +180,32 @@ function xgboost(data, nrounds::Integer; label = Union{}, param = [], watchlist 
     for itm in metrics
         XGBoosterSetParam(bst.handle, "eval_metric", string(itm))
     end
-    for i = 1:nrounds
-        update(bst, 1, dtrain, obj=obj)
-        if !silent
-            @printf(stderr, "%s", eval_set(bst, watchlist, i, feval = feval))
+    with_logger(TBLogger("content/log")) do
+        for i = 1:nrounds
+            # println("i = $i")
+            update(bst, 1, dtrain, obj=obj)
+            if !silent
+                output = eval_set(bst, watchlist, i, feval = feval)
+                # @sprintf("%s", output)
+                println(output)
+                out_list = split(output)
+                for out ∈ out_list
+                    txt = split(out, r"-|:")
+                    if length(txt) < 2
+                        continue
+                    end
+                    name = txt[1]
+                    loss = txt[2]
+                    val = parse(Float64, txt[3])
+                    if loss == "merror"
+                        @info "$name" merror = val
+                    elseif loss == "mlogloss"
+                        @info "$name" mlogloss = val
+                    end
+                end
+            end
         end
-    end
+    end 
     return bst
 end
 
